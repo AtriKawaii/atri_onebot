@@ -11,5 +11,24 @@ crate-type = ["cdylib"]
 [dependencies]
 atri_plugin = "0"
 
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_urlencoded = "0"
+
+actix-web-httpauth = "0"
+
 [dependencies.actix-web]
 version = "4"
+features = ["rustls"]
+
+[dependencies.tokio]
+version = "1"
+features = [
+    "rt-multi-thread",
+    "signal"
+]
+
+[profile.release]
+lto = "thin"
+strip = true
+codegen-units = 1
