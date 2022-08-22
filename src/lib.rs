@@ -14,7 +14,6 @@ use std::time::Duration;
 use crate::http::{get_bot_list, get_self_info};
 use actix_web::http::header::Header;
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
-use atri_plugin::runtime::manager::PluginManager;
 
 #[atri_plugin::plugin]
 struct AtriOneBot {
@@ -116,13 +115,11 @@ impl Drop for AtriOneBot {
 
 #[cfg(test)]
 mod tests {
-    use crate::data::event::{OneBotEvent, OneBotEventInner, OneBotSelfEvent};
-    use crate::data::message::{MessageElement, OneBotMessage, OneBotMessageEvent};
+    use crate::data::event::{OneBotEvent, OneBotTypedEvent, OneBotMetaEvent, BotStatus, OneBotMetaStatus};
     use crate::data::BotSelfData;
     use crate::http::{get_bot_list, get_self_info};
     use actix_web::dev::ServerHandle;
     use actix_web::{get, web, App, HttpServer, Responder};
-    use serde::{Deserialize, Serialize};
     use std::sync::OnceLock;
 
     #[test]
@@ -159,49 +156,41 @@ mod tests {
 
     #[test]
     fn json() {
-        #[derive(Serialize, Deserialize)]
-        struct A(f32);
 
-        #[derive(Serialize, Deserialize)]
-        struct B {
-            a: A,
-            c: C,
-        }
-
-        #[derive(Serialize, Deserialize)]
-        #[serde(tag = "type")]
-        enum C {
-            B(D),
-        }
-
-        #[derive(Serialize, Deserialize)]
-        #[serde(tag = "sub_type")]
-        enum D {
-            A,
-        }
-
-        let data = OneBotSelfEvent {
-            inner: OneBotEvent {
-                id: "".to_string(),
-                time: 0.0,
-                inner: OneBotEventInner::Message(OneBotMessageEvent::Private {
-                    message: OneBotMessage {
-                        message_id: "".to_string(),
-                        message: vec![MessageElement::MentionAll {}],
-                        alt_message: "".to_string(),
-                    },
-                    user_id: "1145141919".to_string(),
-                }),
-                sub_type: "h".to_string(),
-            },
-            bot_self: BotSelfData {
-                platform: "qq".to_string(),
-                user_id: "114514".to_string(),
-            },
+        let data = OneBotEvent {
+            id: "b6e65187-5ac0-489c-b431-53078e9d2bbb".to_string(),
+            time: 1632847927.599013,
+            inner: OneBotTypedEvent::Meta(OneBotMetaEvent::StatusUpdate {
+                status: OneBotMetaStatus {
+                    good: true,
+                    bots: vec![
+                        BotStatus {
+                            bot_self: BotSelfData {
+                                platform: "qq".to_string(),
+                                user_id: "123456".to_string()
+                            },
+                            online: true,
+                            ext: None,
+                        },
+                        BotStatus {
+                            bot_self: BotSelfData {
+                                platform: "qq".to_string(),
+                                user_id: "114514".to_string()
+                            },
+                            online: true,
+                            ext: None,
+                        },
+                    ]
+                }
+            }),
+            sub_type: "".to_string(),
+            bot_self: None
         };
 
-        let _val = serde_json::to_value(&data).unwrap();
+        let str = serde_json::to_string_pretty(&data).unwrap();
 
-        println!("{}", serde_json::to_string_pretty(&data).unwrap());
+        println!("{}", str);
+
+        let _e: OneBotEvent = serde_json::from_str(&str).unwrap();
     }
 }

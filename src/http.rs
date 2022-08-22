@@ -30,3 +30,4 @@ pub async fn get_self_info(bot: web::Query<BotQuery>) -> impl Responder {
 
     web::Json(info)
 }
+
