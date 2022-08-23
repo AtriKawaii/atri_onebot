@@ -2,18 +2,22 @@
 
 mod data;
 mod http;
+mod websocket;
 
 use actix_web::dev::{ServerHandle, Service};
-use actix_web::{App, HttpResponse, HttpServer, web};
+use actix_web::{web, App, HttpResponse, HttpServer};
 use atri_plugin::{info, Plugin};
 use std::future::Future;
 use std::mem;
 use std::net::{Ipv4Addr, SocketAddrV4};
+
 use std::time::Duration;
 
-use crate::http::{get_bot_list, get_self_info};
+use crate::http::{get_self_info, get_status, start_websocket};
+use crate::websocket::ws_listener;
 use actix_web::http::header::Header;
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
+use atri_plugin::listener::ListenerGuard;
 
 #[atri_plugin::plugin]
 struct AtriOneBot {
@@ -23,6 +27,7 @@ struct AtriOneBot {
 struct WebServer {
     runtime: tokio::runtime::Runtime,
     handle: ServerHandle,
+    _listener: ListenerGuard,
 }
 
 impl Plugin for AtriOneBot {
@@ -39,7 +44,11 @@ impl Plugin for AtriOneBot {
             .build()
             .unwrap();
 
-        let http_server = HttpServer::new(|| {
+        let (tx, _) = tokio::sync::broadcast::channel(61);
+
+        let server_tx = tx.clone();
+
+        let http_server = HttpServer::new(move || {
             App::new()
                 .wrap_fn(|a, b| {
                     let correct = String::from("1234");
@@ -76,7 +85,12 @@ impl Plugin for AtriOneBot {
                         pin.await
                     }
                 })
-                .service(get_bot_list)
+                .service(
+                    web::resource("/onebot/websocket")
+                        .route(web::get().to(start_websocket))
+                        .app_data(server_tx.clone()),
+                )
+                .service(get_status)
                 .service(get_self_info)
                 .default_service(web::to(|| async { "Unknown" }))
         })
@@ -91,9 +105,13 @@ impl Plugin for AtriOneBot {
             http_server.await.unwrap();
         });
 
+        let tx = tx.clone();
+        let guard = ws_listener(tx);
+
         self.server = Some(WebServer {
             runtime: rt,
-            handle
+            handle,
+            _listener: guard,
         });
 
         info!("Started");
@@ -115,9 +133,11 @@ impl Drop for AtriOneBot {
 
 #[cfg(test)]
 mod tests {
-    use crate::data::event::{OneBotEvent, OneBotTypedEvent, OneBotMetaEvent, BotStatus, OneBotMetaStatus};
+    use crate::data::event::{
+        BotStatus, OneBotEvent, OneBotMetaEvent, OneBotMetaStatus, OneBotTypedEvent,
+    };
     use crate::data::BotSelfData;
-    use crate::http::{get_bot_list, get_self_info};
+    use crate::http::get_self_info;
     use actix_web::dev::ServerHandle;
     use actix_web::{get, web, App, HttpServer, Responder};
     use std::sync::OnceLock;
@@ -143,7 +163,6 @@ mod tests {
                     .service(hello)
                     .service(stop)
                     .service(get_self_info)
-                    .service(get_bot_list)
                     .default_service(web::to(|| async { "Where are u" }))
             })
             .bind(("127.0.0.1", 8080))
@@ -156,7 +175,6 @@ mod tests {
 
     #[test]
     fn json() {
-
         let data = OneBotEvent {
             id: "b6e65187-5ac0-489c-b431-53078e9d2bbb".to_string(),
             time: 1632847927.599013,
@@ -167,7 +185,7 @@ mod tests {
                         BotStatus {
                             bot_self: BotSelfData {
                                 platform: "qq".to_string(),
-                                user_id: "123456".to_string()
+                                user_id: "123456".to_string(),
                             },
                             online: true,
                             ext: None,
@@ -175,16 +193,16 @@ mod tests {
                         BotStatus {
                             bot_self: BotSelfData {
                                 platform: "qq".to_string(),
-                                user_id: "114514".to_string()
+                                user_id: "114514".to_string(),
                             },
                             online: true,
                             ext: None,
                         },
-                    ]
-                }
+                    ],
+                },
             }),
             sub_type: "".to_string(),
-            bot_self: None
+            bot_self: None,
         };
 
         let str = serde_json::to_string_pretty(&data).unwrap();

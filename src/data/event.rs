@@ -1,8 +1,9 @@
-use crate::data::message::{OneBotMessageEvent};
-use crate::data::{BotSelfData};
+use crate::data::message::OneBotMessageEvent;
+use crate::data::BotSelfData;
+use atri_plugin::bot::Bot;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct OneBotEvent {
     pub id: String,
     pub time: f64,
@@ -14,7 +15,7 @@ pub struct OneBotEvent {
     pub bot_self: Option<BotSelfData>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
 #[serde(rename_all = "snake_case")]
 pub enum OneBotTypedEvent {
@@ -23,21 +24,21 @@ pub enum OneBotTypedEvent {
     Message(OneBotMessageEvent),
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(tag = "detail_type")]
 #[serde(rename_all = "snake_case")]
 pub enum OneBotMetaEvent {
     Heartbeat { interval: i64 },
-    StatusUpdate { status: OneBotMetaStatus, },
+    StatusUpdate { status: OneBotMetaStatus },
 }
 
-#[derive(Default,Serialize, Deserialize)]
+#[derive(Clone, Default, Serialize, Deserialize)]
 pub struct OneBotMetaStatus {
     pub good: bool,
     pub bots: Vec<BotStatus>,
 }
 
-#[derive(Default,Serialize, Deserialize)]
+#[derive(Clone, Default, Serialize, Deserialize)]
 pub struct BotStatus {
     #[serde(rename = "self")]
     pub bot_self: BotSelfData,
@@ -46,9 +47,17 @@ pub struct BotStatus {
     pub ext: Option<BotStatusExt>,
 }
 
+impl From<Bot> for BotStatus {
+    fn from(bt: Bot) -> Self {
+        Self {
+            bot_self: bt.into(),
+            online: true,
+            ext: None,
+        }
+    }
+}
 
-
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum BotStatusExt {
     #[serde(rename = "qq.status")]

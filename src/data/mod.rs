@@ -2,34 +2,33 @@ pub mod event;
 pub mod message;
 pub mod notice;
 
+use crate::data::event::OneBotMetaStatus;
+use atri_plugin::bot::Bot;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::error::Error;
-use atri_plugin::bot::Bot;
 
 #[derive(Serialize, Deserialize)]
 pub struct ActionResponse {
     pub status: ActionStatus,
     pub retcode: i64,
-    pub data: Value,
+    pub data: Option<ActionData>,
     pub message: String,
 }
 
+#[derive(Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ActionData {
+    GetStatus(OneBotMetaStatus),
+}
+
 impl ActionResponse {
-    pub fn from_result<T: Serialize, E: Error>(result: Result<T, E>, code: i64) -> Self {
-        match result {
-            Ok(t) => ActionResponse {
-                status: ActionStatus::Ok,
-                retcode: 0,
-                data: serde_json::to_value(t).unwrap(),
-                message: "".to_string(),
-            },
-            Err(e) => ActionResponse {
-                status: ActionStatus::Failed,
-                retcode: code,
-                data: Value::Null,
-                message: e.to_string(),
-            },
+    pub fn from_err<E: Error>(err: E, code: i64) -> Self {
+        Self {
+            status: ActionStatus::Failed,
+            retcode: code,
+            data: None,
+            message: err.to_string(),
         }
     }
 }
@@ -41,7 +40,13 @@ pub enum ActionStatus {
     Failed,
 }
 
-#[derive(Default,Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
+pub struct ActionRequest {
+    action: String,
+    params: Value,
+}
+
+#[derive(Clone, Default, Serialize, Deserialize)]
 pub struct BotSelfData {
     pub platform: String,
     pub user_id: String,

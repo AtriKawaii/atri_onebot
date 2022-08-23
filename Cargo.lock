@@ -217,6 +217,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "actix-ws"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "535aec173810be3ca6f25dd5b4d431ae7125d62000aa3cbae1ec739921b02cf3"
+dependencies = [
+ "actix-codec",
+ "actix-http",
+ "actix-web",
+ "futures-core",
+ "tokio",
+]
+
+[[package]]
 name = "adler"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -260,14 +273,10 @@ dependencies = [
 [[package]]
 name = "atri_ffi"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e1c64fefc82acdbc9f71c74509f3031feb6b08b9cd059295b51dbb29348affe"
 
 [[package]]
 name = "atri_macros"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c3d88c7cee3e0a0e617a444a09f62ec0344a0f1bebfb9c4fcac1d40203ebdb0"
 
 [[package]]
 name = "atri_onebot"
@@ -275,18 +284,18 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "actix-web-httpauth",
+ "actix-ws",
  "atri_plugin",
  "serde",
  "serde_json",
  "serde_urlencoded",
  "tokio",
+ "uuid",
 ]
 
 [[package]]
 name = "atri_plugin"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c6d5ce85636394171319e632af37f05bcf80ff8c390426e3f85bbbfe713087ae"
 dependencies = [
  "atri_ffi",
  "atri_macros",
@@ -1190,6 +1199,16 @@ dependencies = [
  "idna",
  "matches",
  "percent-encoding",
+]
+
+[[package]]
+name = "uuid"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd6469f4314d5f1ffec476e05f17cc9a78bc7a27a6a857842170bdf8d6f98d2f"
+dependencies = [
+ "getrandom",
+ "rand",
 ]
 
 [[package]]

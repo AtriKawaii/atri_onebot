@@ -1,8 +1,8 @@
-use atri_plugin::message::{MessageChain, MessageValue};
 use atri_plugin::message::meta::Reply;
+use atri_plugin::message::{MessageChain, MessageValue};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "detail_type")]
 pub enum OneBotMessageEvent {
@@ -18,7 +18,7 @@ pub enum OneBotMessageEvent {
     },
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct OneBotMessage {
     pub message_id: String,
     pub message: Vec<MessageElement>,
@@ -48,7 +48,7 @@ impl From<MessageChain> for OneBotMessage {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
 #[serde(rename_all = "snake_case")]
 pub enum MessageElement {
@@ -92,8 +92,12 @@ impl From<MessageValue> for MessageElement {
     fn from(val: MessageValue) -> Self {
         match val {
             MessageValue::Text(s) => Self::Text { text: s },
-            MessageValue::At(at) => Self::Mention { user_id: at.target.to_string() },
-            _ => unimplemented!()
+            MessageValue::At(at) => Self::Mention {
+                user_id: at.target.to_string(),
+            },
+            _ => Self::Text {
+                text: "no".to_string(),
+            },
         }
     }
 }
