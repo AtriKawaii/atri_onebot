@@ -2,7 +2,7 @@ use atri_plugin::message::meta::Reply;
 use atri_plugin::message::{MessageChain, MessageValue};
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "detail_type")]
 pub enum OneBotMessageEvent {
@@ -16,9 +16,15 @@ pub enum OneBotMessageEvent {
         message: OneBotMessage,
         group_id: String,
     },
+    Channel {
+        #[serde(flatten)]
+        message: OneBotMessage,
+        guild_id: String,
+        channel_id: String,
+    },
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OneBotMessage {
     pub message_id: String,
     pub message: Vec<MessageElement>,
@@ -48,7 +54,7 @@ impl From<MessageChain> for OneBotMessage {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
 #[serde(rename_all = "snake_case")]
 pub enum MessageElement {

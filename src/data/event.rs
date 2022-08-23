@@ -1,5 +1,5 @@
+use crate::data::action::BotSelfData;
 use crate::data::message::OneBotMessageEvent;
-use crate::data::BotSelfData;
 use atri_plugin::bot::Bot;
 use serde::{Deserialize, Serialize};
 

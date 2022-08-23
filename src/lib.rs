@@ -13,8 +13,8 @@ use std::net::{Ipv4Addr, SocketAddrV4};
 
 use std::time::Duration;
 
-use crate::http::{get_self_info, get_status, start_websocket};
-use crate::websocket::ws_listener;
+use crate::http::{get_self_info, get_status};
+use crate::websocket::{start_websocket, ws_listener};
 use actix_web::http::header::Header;
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
 use atri_plugin::listener::ListenerGuard;
@@ -133,13 +133,14 @@ impl Drop for AtriOneBot {
 
 #[cfg(test)]
 mod tests {
+    use crate::data::action::{ActionRequest, BotSelfData};
     use crate::data::event::{
         BotStatus, OneBotEvent, OneBotMetaEvent, OneBotMetaStatus, OneBotTypedEvent,
     };
-    use crate::data::BotSelfData;
     use crate::http::get_self_info;
     use actix_web::dev::ServerHandle;
     use actix_web::{get, web, App, HttpServer, Responder};
+    use serde_json::json;
     use std::sync::OnceLock;
 
     #[test]
@@ -210,5 +211,121 @@ mod tests {
         println!("{}", str);
 
         let _e: OneBotEvent = serde_json::from_str(&str).unwrap();
+    }
+
+    #[test]
+    fn actions() {
+        let self_info_req = json!({
+            "action": "get_self_info",
+            "params": {}
+        });
+
+        println!(
+            "{:?}",
+            serde_json::from_value::<ActionRequest>(self_info_req).unwrap()
+        );
+
+        let user_info_req = json!({
+            "action": "get_user_info",
+            "params": {
+                "user_id": "114514"
+            }
+        });
+
+        println!(
+            "{:?}",
+            serde_json::from_value::<ActionRequest>(user_info_req).unwrap()
+        );
+
+        let friend_list_req = json!({
+            "action": "get_friend_list",
+            "params": {}
+        });
+
+        println!(
+            "{:?}",
+            serde_json::from_value::<ActionRequest>(friend_list_req).unwrap()
+        );
+
+        let send_message_req = json!({
+            "action": "send_message",
+            "params": {
+                "detail_type": "group",
+                "group_id": "12467",
+                "message": [
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": "我是文字巴拉巴拉巴拉"
+                        }
+                    }
+                ]
+            }
+        });
+
+        println!(
+            "{:?}",
+            serde_json::from_value::<ActionRequest>(send_message_req).unwrap()
+        );
+
+        let group_info_req = json!({
+            "action": "get_group_info",
+            "params": {
+                "group_id": "123456"
+            }
+        });
+
+        println!(
+            "{:?}",
+            serde_json::from_value::<ActionRequest>(group_info_req).unwrap()
+        );
+
+        let group_list_req = json!({
+            "action": "get_group_list",
+            "params": {}
+        });
+
+        println!(
+            "{:?}",
+            serde_json::from_value::<ActionRequest>(group_list_req).unwrap()
+        );
+
+        let group_member_info_req = json!({
+                "action": "get_group_member_info",
+                "params": {
+                "group_id": "123456",
+                "user_id": "3847573"
+            }
+        });
+
+        println!(
+            "{:?}",
+            serde_json::from_value::<ActionRequest>(group_member_info_req).unwrap()
+        );
+
+        let group_member_list_req = json!({
+                "action": "get_group_member_list",
+                "params": {
+                "group_id": "114514",
+            }
+        });
+
+        println!(
+            "{:?}",
+            serde_json::from_value::<ActionRequest>(group_member_list_req).unwrap()
+        );
+
+        let set_group_name_req = json!({
+                "action": "set_group_name",
+                "params": {
+                "group_id": "123456",
+                "group_name": "1919810"
+            }
+        });
+
+        println!(
+            "{:?}",
+            serde_json::from_value::<ActionRequest>(set_group_name_req).unwrap()
+        );
     }
 }
