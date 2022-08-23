@@ -1,6 +1,7 @@
 #![feature(once_cell)]
 
 mod data;
+mod handler;
 mod http;
 mod websocket;
 
@@ -13,7 +14,7 @@ use std::net::{Ipv4Addr, SocketAddrV4};
 
 use std::time::Duration;
 
-use crate::http::{get_self_info, get_status};
+use crate::http::onebot_http;
 use crate::websocket::{start_websocket, ws_listener};
 use actix_web::http::header::Header;
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
@@ -61,7 +62,7 @@ impl Plugin for AtriOneBot {
                                 Box::new(async { b.await })
                             } else {
                                 Box::new(async {
-                                    Ok(a.into_response(HttpResponse::Unauthorized().await?))
+                                    Ok(a.into_response(HttpResponse::Unauthorized().finish()))
                                 })
                             }
                         } else {
@@ -75,7 +76,7 @@ impl Plugin for AtriOneBot {
                                 Box::new(async { b.await })
                             } else {
                                 Box::new(async {
-                                    Ok(a.into_response(HttpResponse::Unauthorized().await?))
+                                    Ok(a.into_response(HttpResponse::Unauthorized().finish()))
                                 })
                             }
                         };
@@ -90,8 +91,7 @@ impl Plugin for AtriOneBot {
                         .route(web::get().to(start_websocket))
                         .app_data(server_tx.clone()),
                 )
-                .service(get_status)
-                .service(get_self_info)
+                .service(onebot_http)
                 .default_service(web::to(|| async { "Unknown" }))
         })
         .bind(addr)
@@ -133,11 +133,7 @@ impl Drop for AtriOneBot {
 
 #[cfg(test)]
 mod tests {
-    use crate::data::action::{ActionRequest, BotSelfData};
-    use crate::data::event::{
-        BotStatus, OneBotEvent, OneBotMetaEvent, OneBotMetaStatus, OneBotTypedEvent,
-    };
-    use crate::http::get_self_info;
+    use crate::data::action::ActionRequest;
     use actix_web::dev::ServerHandle;
     use actix_web::{get, web, App, HttpServer, Responder};
     use serde_json::json;
@@ -163,7 +159,6 @@ mod tests {
                 App::new()
                     .service(hello)
                     .service(stop)
-                    .service(get_self_info)
                     .default_service(web::to(|| async { "Where are u" }))
             })
             .bind(("127.0.0.1", 8080))
@@ -172,45 +167,6 @@ mod tests {
             HANDLE.get_or_init(|| http_server.handle());
             http_server.await.unwrap();
         });
-    }
-
-    #[test]
-    fn json() {
-        let data = OneBotEvent {
-            id: "b6e65187-5ac0-489c-b431-53078e9d2bbb".to_string(),
-            time: 1632847927.599013,
-            inner: OneBotTypedEvent::Meta(OneBotMetaEvent::StatusUpdate {
-                status: OneBotMetaStatus {
-                    good: true,
-                    bots: vec![
-                        BotStatus {
-                            bot_self: BotSelfData {
-                                platform: "qq".to_string(),
-                                user_id: "123456".to_string(),
-                            },
-                            online: true,
-                            ext: None,
-                        },
-                        BotStatus {
-                            bot_self: BotSelfData {
-                                platform: "qq".to_string(),
-                                user_id: "114514".to_string(),
-                            },
-                            online: true,
-                            ext: None,
-                        },
-                    ],
-                },
-            }),
-            sub_type: "".to_string(),
-            bot_self: None,
-        };
-
-        let str = serde_json::to_string_pretty(&data).unwrap();
-
-        println!("{}", str);
-
-        let _e: OneBotEvent = serde_json::from_str(&str).unwrap();
     }
 
     #[test]

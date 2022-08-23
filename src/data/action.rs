@@ -17,7 +17,38 @@ pub struct ActionResponse {
 #[derive(Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum ActionData {
+    GetSupportActions(Vec<String>),
     GetStatus(OneBotMetaStatus),
+    GetVersion {
+        #[serde(rename = "impl")]
+        implement: String,
+        version: String,
+        onebot_version: String,
+    },
+    GetSelfInfo {
+        user_id: String,
+        user_name: String,
+        user_displayname: String,
+    },
+}
+
+impl ActionData {
+    pub fn support_actions() -> Self {
+        Self::GetSupportActions(
+            ["get_supported_actions", "get_status", "get_version"]
+                .into_iter()
+                .map(String::from)
+                .collect(),
+        )
+    }
+
+    pub fn version() -> Self {
+        Self::GetVersion {
+            implement: "atri-http".to_string(),
+            version: "0.1.0".to_string(),
+            onebot_version: "12".to_string(),
+        }
+    }
 }
 
 impl ActionResponse {
@@ -52,7 +83,14 @@ pub struct ActionRequest {
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "action", content = "params")]
 pub enum Action {
+    GetLatestEvent {
+        limit: i64,
+        timeout: i64,
+    },
+    GetSupportActions {},
     GetSelfInfo {},
+    GetStatus {},
+    GetVersion {},
     GetUserInfo {
         user_id: String,
     },

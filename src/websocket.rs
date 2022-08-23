@@ -1,6 +1,7 @@
-use crate::data::action::ActionRequest;
+use crate::data::action::{ActionRequest, ActionResponse};
 use crate::data::event::{OneBotEvent, OneBotMetaEvent, OneBotTypedEvent};
 use crate::data::message::OneBotMessageEvent;
+use crate::handler::handle_action;
 use actix_web::{web, HttpRequest, HttpResponse};
 use actix_ws::Message;
 use atri_plugin::event::Event;
@@ -70,10 +71,17 @@ pub async fn start_websocket(
     tokio::task::spawn_local(async move {
         while let Some(Ok(msg)) = stream.recv().await {
             match msg {
-                Message::Text(json) => match serde_json::from_str::<ActionRequest>(&json) {
-                    Ok(req) => {}
-                    Err(e) => {}
-                },
+                Message::Text(json) => {
+                    let rsp = match serde_json::from_str::<ActionRequest>(&json) {
+                        Ok(req) => handle_action(req, None).await,
+                        Err(e) => ActionResponse::from_err(e, 10001),
+                    };
+
+                    let str = serde_json::to_string(&rsp).expect("无法序列化OneBot动作响应");
+                    if session.text(str).await.is_err() {
+                        break;
+                    }
+                }
                 Message::Binary(_) => {}
                 Message::Continuation(_) => {}
                 Message::Ping(_) => {}
