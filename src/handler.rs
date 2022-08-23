@@ -5,6 +5,23 @@ use crate::data::event::{BotStatus, OneBotMetaStatus};
 use atri_plugin::bot::Bot;
 use std::str::FromStr;
 
+macro_rules! id_parse {
+    ($id:expr,$echo:ident) => {
+        match i64::from_str($id) {
+            Ok(id) => id,
+            Err(e) => {
+                return ActionResponse {
+                    status: ActionStatus::Failed,
+                    retcode: 10003,
+                    data: None,
+                    message: e.to_string(),
+                    echo: $echo,
+                }
+            }
+        }
+    };
+}
+
 pub async fn handle_action(req: ActionRequest, bot_id: Option<i64>) -> ActionResponse {
     let ActionRequest {
         action,
@@ -49,24 +66,16 @@ pub async fn handle_action(req: ActionRequest, bot_id: Option<i64>) -> ActionRes
     let _echo = echo.clone();
     let get_bot_id = |data: Option<BotSelfData>| -> Result<i64, ActionResponse> {
         if let Some(dat) = data {
-            let result = i64::from_str(&dat.user_id);
-
-            return result.map_err(|err| ActionResponse {
+            id_parse(&dat.user_id, _echo)
+        } else {
+            Err(ActionResponse {
                 status: ActionStatus::Failed,
-                retcode: 10003,
+                retcode: 10101,
                 data: None,
-                message: err.to_string(),
+                message: "未指定机器人账号".to_string(),
                 echo: _echo,
-            });
+            })
         }
-
-        Err(ActionResponse {
-            status: ActionStatus::Failed,
-            retcode: 10101,
-            data: None,
-            message: "未指定机器人账号".to_string(),
-            echo: _echo,
-        })
     };
 
     let bot_id = if let Some(b) = bot_id {
@@ -99,12 +108,35 @@ pub async fn handle_action(req: ActionRequest, bot_id: Option<i64>) -> ActionRes
                 user_displayname: "".to_string(),
             }),
         ),
-        _ => {
+        Action::GetUserInfo { user_id } => (
+            0,
+            Some({
+                let id = id_parse!(&user_id, echo);
+                let friend = bot.find_friend(id);
+                if let Some(friend) = friend {
+                    ActionData::GetUserInfo {
+                        user_id,
+                        user_name: friend.nickname().to_string(),
+                        user_displayname: "".to_string(),
+                        user_remark: "".to_string(),
+                    }
+                } else {
+                    return ActionResponse {
+                        status: ActionStatus::Failed,
+                        retcode: 35002,
+                        data: None,
+                        message: "好友不存在".to_string(),
+                        echo
+                    }
+                }
+            }),
+        ),
+        or => {
             return ActionResponse {
                 status: ActionStatus::Failed,
                 retcode: 20001,
                 data: None,
-                message: "未知分支, 不应该".to_string(),
+                message: format!("未知分支: {:?}", or),
                 echo,
             };
         }
@@ -123,4 +155,14 @@ pub async fn handle_action(req: ActionRequest, bot_id: Option<i64>) -> ActionRes
     };
 
     rsp
+}
+
+fn id_parse(id: &str, echo: Option<String>) -> Result<i64, ActionResponse> {
+    i64::from_str(id).map_err(|err| ActionResponse {
+        status: ActionStatus::Failed,
+        retcode: 10003,
+        data: None,
+        message: err.to_string(),
+        echo,
+    })
 }

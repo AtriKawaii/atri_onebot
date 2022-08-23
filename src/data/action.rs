@@ -30,6 +30,12 @@ pub enum ActionData {
         user_name: String,
         user_displayname: String,
     },
+    GetUserInfo {
+        user_id: String,
+        user_name: String,
+        user_displayname: String,
+        user_remark: String,
+    },
 }
 
 impl ActionData {
