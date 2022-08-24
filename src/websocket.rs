@@ -74,7 +74,7 @@ pub async fn start_websocket(
                 Message::Text(json) => {
                     let rsp = match serde_json::from_str::<ActionRequest>(&json) {
                         Ok(req) => handle_action(req, None).await,
-                        Err(e) => ActionResponse::from_err(e, 10001),
+                        Err(e) => ActionResponse::from_err(e, 10001, None),
                     };
 
                     let str = serde_json::to_string(&rsp).expect("无法序列化OneBot动作响应");

@@ -1,3 +1,4 @@
+use crate::data::contact::{GroupInfo, GroupMemberInfo, UserInfo};
 use crate::data::event::OneBotMetaStatus;
 use crate::data::message::MessageElement;
 use atri_plugin::bot::Bot;
@@ -30,12 +31,12 @@ pub enum ActionData {
         user_name: String,
         user_displayname: String,
     },
-    GetUserInfo {
-        user_id: String,
-        user_name: String,
-        user_displayname: String,
-        user_remark: String,
-    },
+    GetUserInfo(UserInfo),
+    GetFriendList(Vec<UserInfo>),
+    GetGroupInfo(GroupInfo),
+    GetGroupList(Vec<GroupInfo>),
+    GetGroupMemberInfo(GroupMemberInfo),
+    GetGroupMemberList(Vec<GroupMemberInfo>),
 }
 
 impl ActionData {
@@ -58,13 +59,23 @@ impl ActionData {
 }
 
 impl ActionResponse {
-    pub fn from_err<E: Error>(err: E, code: i64) -> Self {
+    pub fn from_err<E: Error>(err: E, code: i64, echo: Option<String>) -> Self {
         Self {
             status: ActionStatus::Failed,
             retcode: code,
             data: None,
             message: err.to_string(),
-            echo: None,
+            echo,
+        }
+    }
+
+    pub fn from_data(data: Option<ActionData>, echo: Option<String>) -> Self {
+        Self {
+            status: ActionStatus::Ok,
+            retcode: 0,
+            data,
+            message: "".to_string(),
+            echo,
         }
     }
 }
@@ -116,7 +127,9 @@ pub enum Action {
         group_id: String,
         group_name: String,
     },
-    LeaveGroup {},
+    LeaveGroup {
+        group_id: String,
+    },
     SendMessage(OneBotMessageAction),
     DeleteMessage {
         message_id: String,
