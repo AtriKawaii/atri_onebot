@@ -1,11 +1,6 @@
 use actix_web::{post, web, HttpResponse, Responder};
 
-use atri_plugin::bot::Bot;
-
-use crate::data::action::{
-    Action, ActionData, ActionRequest, ActionResponse, ActionStatus, BotSelfData,
-};
-use crate::data::event::{BotStatus, OneBotMetaStatus};
+use crate::data::action::{ActionRequest, ActionResponse};
 use crate::handler::handle_action;
 use serde::{Deserialize, Serialize};
 

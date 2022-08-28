@@ -8,7 +8,7 @@ use atri_plugin::event::Event;
 use atri_plugin::info;
 use atri_plugin::listener::{Listener, ListenerGuard};
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::{Duration, SystemTime};
 
 pub async fn start_websocket(
     req: HttpRequest,
@@ -31,10 +31,11 @@ pub async fn start_websocket(
 
     tokio::task::spawn_local(async move {
         let interval = 5000;
+        assert!(interval > 0);
 
         let mut heartbeat_pkt = OneBotEvent {
             id: uuid::Uuid::new_v4().to_string(),
-            time: Instant::now().elapsed().as_secs_f64(),
+            time: SystemTime::UNIX_EPOCH.elapsed().unwrap().as_secs_f64(),
             inner: OneBotTypedEvent::Meta(OneBotMetaEvent::Heartbeat { interval }),
             sub_type: "".to_string(),
             bot_self: None,
@@ -46,6 +47,7 @@ pub async fn start_websocket(
         {
             let uuid = uuid::Uuid::new_v4();
             heartbeat_pkt.id = uuid.to_string();
+            heartbeat_pkt.time = SystemTime::UNIX_EPOCH.elapsed().unwrap().as_secs_f64();
             tokio::time::sleep(Duration::from_millis(interval as u64)).await; // >0
         }
     });
@@ -57,7 +59,8 @@ pub async fn start_websocket(
             match str {
                 Ok(str) => {
                     let result = event_handler.text(str).await;
-                    if result.is_err() {
+                    if let Err(e) = result {
+                        info!("{}: {:?}", e, req.connection_info().realip_remote_addr());
                         return;
                     }
                 }
@@ -103,12 +106,30 @@ pub fn ws_listener(tx: tokio::sync::broadcast::Sender<Arc<OneBotEvent>>) -> List
         async move {
             match e {
                 Event::GroupMessageEvent(e) => {
+                    let msg = e.message();
                     let ob = OneBotEvent {
                         id: uuid::Uuid::new_v4().to_string(),
-                        time: 0.0,
+                        time: msg.metadata().time as f64,
                         inner: OneBotTypedEvent::Message(OneBotMessageEvent::Group {
-                            message: e.message().into(),
+                            message: msg.into(),
                             group_id: e.group().id().to_string(),
+                        }),
+                        sub_type: "".to_string(),
+                        bot_self: Some(e.bot().into()),
+                    };
+
+                    let arc = Arc::new(ob);
+
+                    let _ = tx.send(arc);
+                }
+                Event::FriendMessageEvent(e) => {
+                    let msg = e.message();
+                    let ob = OneBotEvent {
+                        id: uuid::Uuid::new_v4().to_string(),
+                        time: msg.metadata().time as f64,
+                        inner: OneBotTypedEvent::Message(OneBotMessageEvent::Private {
+                            message: msg.into(),
+                            user_id: e.friend().id().to_string(),
                         }),
                         sub_type: "".to_string(),
                         bot_self: Some(e.bot().into()),

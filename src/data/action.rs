@@ -157,14 +157,22 @@ pub enum OneBotMessageAction {
 
 #[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub struct BotSelfData {
-    pub platform: String,
+    pub platform: Platform,
     pub user_id: String,
+}
+
+#[derive(Clone, Default, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Platform {
+    #[default]
+    #[serde(rename = "qq")]
+    QQ,
 }
 
 impl From<Bot> for BotSelfData {
     fn from(bot: Bot) -> Self {
         Self {
-            platform: "qq".to_string(),
+            platform: Platform::QQ,
             user_id: bot.id().to_string(),
         }
     }
