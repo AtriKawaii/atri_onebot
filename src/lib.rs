@@ -41,6 +41,7 @@ impl Plugin for AtriOneBot {
         let addr = SocketAddrV4::new(ip, 8080);
 
         let rt = tokio::runtime::Builder::new_multi_thread()
+            .worker_threads(1)
             .enable_all()
             .build()
             .unwrap();
