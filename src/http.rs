@@ -1,4 +1,4 @@
-use actix_web::{post, web, HttpResponse, Responder};
+use actix_web::{post, web, Responder};
 
 use crate::data::action::{ActionRequest, ActionResponse};
 use crate::handler::handle_action;

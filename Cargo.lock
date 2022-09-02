@@ -227,11 +227,15 @@ dependencies = [
 
 [[package]]
 name = "atri_ffi"
-version = "0.2.0"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "78588ca76ebb6337c05b075698889b4b70dc5d12959b015506844b5ea4747762"
 
 [[package]]
 name = "atri_macros"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c3d88c7cee3e0a0e617a444a09f62ec0344a0f1bebfb9c4fcac1d40203ebdb0"
 
 [[package]]
 name = "atri_onebot"
@@ -250,7 +254,9 @@ dependencies = [
 
 [[package]]
 name = "atri_plugin"
-version = "0.2.0"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b3277ae9ed581d0bdf0c1b03530962a3aba21e1b1995b55e8215c9c281a6dabe"
 dependencies = [
  "atri_ffi",
  "atri_macros",
