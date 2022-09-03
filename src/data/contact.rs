@@ -15,9 +15,9 @@ impl From<Friend> for UserInfo {
     fn from(f: Friend) -> Self {
         Self {
             user_id: f.id().to_string(),
-            user_name: f.nickname().to_string(),
-            user_displayname: "".to_string(),
-            user_remark: f.nickname().to_string(),
+            user_name: f.nickname().into(),
+            user_displayname: f.nickname().into(),
+            user_remark: f.nickname().into(),
         }
     }
 }

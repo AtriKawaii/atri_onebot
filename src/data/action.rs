@@ -74,7 +74,7 @@ impl ActionResponse {
             status: ActionStatus::Ok,
             retcode: 0,
             data,
-            message: "".to_string(),
+            message: "".into(),
             echo,
         }
     }

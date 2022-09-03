@@ -1,11 +1,13 @@
+use std::str::FromStr;
+
+use atri_plugin::bot::Bot;
+
 use crate::data::action::{
     Action, ActionData, ActionRequest, ActionResponse, ActionStatus, BotSelfData,
     OneBotMessageAction,
 };
 use crate::data::contact::{GroupInfo, GroupMemberInfo, UserInfo};
 use crate::data::event::{BotStatus, OneBotMetaStatus};
-use atri_plugin::bot::Bot;
-use std::str::FromStr;
 
 macro_rules! id_parse {
     ($id:expr,$echo:ident) => {
@@ -33,7 +35,7 @@ macro_rules! get_group {
                 status: ActionStatus::Failed,
                 retcode: 35002,
                 data: None,
-                message: "好友不存在".to_string(),
+                message: "群不存在".into(),
                 echo: $echo,
             };
         }
@@ -49,20 +51,21 @@ macro_rules! get_friend {
                 status: ActionStatus::Failed,
                 retcode: 35003,
                 data: None,
-                message: "群不存在".to_string(),
+                message: "好友不存在".into(),
                 echo: $echo,
             };
         }
     };
 }
 
-pub async fn handle_action(req: ActionRequest, bot_id: Option<i64>) -> ActionResponse {
-    let ActionRequest {
+pub async fn handle_action(
+    ActionRequest {
         action,
         echo,
         bot_self,
-    } = req;
-
+    }: ActionRequest,
+    bot_id: Option<i64>,
+) -> ActionResponse {
     match &action {
         Action::GetStatus {} => {
             return ActionResponse::from_data(
@@ -91,7 +94,7 @@ pub async fn handle_action(req: ActionRequest, bot_id: Option<i64>) -> ActionRes
                 status: ActionStatus::Failed,
                 retcode: 10101,
                 data: None,
-                message: "未指定机器人账号".to_string(),
+                message: "未指定机器人账号".into(),
                 echo: _echo,
             })
         }
@@ -113,7 +116,7 @@ pub async fn handle_action(req: ActionRequest, bot_id: Option<i64>) -> ActionRes
             status: ActionStatus::Failed,
             retcode: 35001,
             data: None,
-            message: "机器人不存在或未登陆".to_string(),
+            message: "机器人不存在或未登陆".into(),
             echo,
         };
     };
@@ -121,8 +124,8 @@ pub async fn handle_action(req: ActionRequest, bot_id: Option<i64>) -> ActionRes
     let data = match action {
         Action::GetSelfInfo {} => Some(ActionData::GetSelfInfo {
             user_id: bot_id.to_string(),
-            user_name: bot.nickname().to_string(),
-            user_displayname: "".to_string(),
+            user_name: bot.nickname().into(),
+            user_displayname: "".into(),
         }),
         Action::GetUserInfo { user_id } => {
             let id = id_parse!(&user_id, echo);
@@ -130,9 +133,9 @@ pub async fn handle_action(req: ActionRequest, bot_id: Option<i64>) -> ActionRes
 
             Some(ActionData::GetUserInfo(UserInfo {
                 user_id,
-                user_name: friend.nickname().to_string(),
-                user_displayname: "".to_string(),
-                user_remark: friend.nickname().to_string(),
+                user_name: friend.nickname().into(),
+                user_displayname: friend.nickname().into(),
+                user_remark: friend.nickname().into(),
             }))
         }
         Action::GetFriendList {} => Some(ActionData::GetFriendList(
@@ -145,7 +148,7 @@ pub async fn handle_action(req: ActionRequest, bot_id: Option<i64>) -> ActionRes
 
             Some(ActionData::GetGroupInfo(GroupInfo {
                 group_id,
-                group_name: group.name().to_string(),
+                group_name: group.name().into(),
             }))
         }
         Action::GetGroupList {} => Some(ActionData::GetGroupList(
@@ -161,10 +164,10 @@ pub async fn handle_action(req: ActionRequest, bot_id: Option<i64>) -> ActionRes
                 named
             } else {
                 return ActionResponse {
-                    status: ActionStatus::Ok,
+                    status: ActionStatus::Failed,
                     retcode: 35004,
                     data: None,
-                    message: "群员不存在".to_string(),
+                    message: "群员不存在".into(),
                     echo,
                 };
             };
@@ -208,10 +211,10 @@ pub async fn handle_action(req: ActionRequest, bot_id: Option<i64>) -> ActionRes
 
             if !group.quit().await {
                 return ActionResponse {
-                    status: ActionStatus::Ok,
+                    status: ActionStatus::Failed,
                     retcode: 35021,
                     data: None,
-                    message: "未退出群, 可能是已经退出".to_string(),
+                    message: "未退出群, 可能是已经退出".into(),
                     echo,
                 };
             }
@@ -235,9 +238,9 @@ pub async fn handle_action(req: ActionRequest, bot_id: Option<i64>) -> ActionRes
                         status: ActionStatus::Failed,
                         retcode: 10002,
                         data: None,
-                        message: "暂不支持发送频道消息".to_string(),
+                        message: "暂不支持发送频道消息".into(),
                         echo,
-                    }
+                    };
                 }
             }
 

@@ -22,10 +22,7 @@ actix-web-httpauth = "0"
 
 [dependencies.actix-web]
 version = "4"
-features = [
-    #"rustls",
-    "macros",
-]
+features = ["macros"]
 default-features = false
 
 [dependencies.tokio]
