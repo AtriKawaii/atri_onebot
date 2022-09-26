@@ -5,7 +5,7 @@ use atri_plugin::bot::Bot;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 pub struct ActionResponse {
     pub status: ActionStatus,
     pub retcode: i64,
@@ -15,16 +15,16 @@ pub struct ActionResponse {
     pub echo: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug ,Serialize)]
 #[serde(untagged)]
 pub enum ActionData {
-    GetSupportActions(Vec<String>),
+    GetSupportActions(&'static [&'static str]),
     GetStatus(OneBotMetaStatus),
     GetVersion {
         #[serde(rename = "impl")]
-        implement: String,
-        version: String,
-        onebot_version: String,
+        implement: &'static str,
+        version: &'static str,
+        onebot_version: &'static str,
     },
     GetSelfInfo {
         user_id: String,
@@ -42,18 +42,15 @@ pub enum ActionData {
 impl ActionData {
     pub fn support_actions() -> Self {
         Self::GetSupportActions(
-            ["get_supported_actions", "get_status", "get_version"]
-                .into_iter()
-                .map(String::from)
-                .collect(),
+            &["get_supported_actions", "get_status", "get_version"]
         )
     }
 
     pub fn version() -> Self {
         Self::GetVersion {
-            implement: "atri-http".to_string(),
-            version: "0.1.0".to_string(),
-            onebot_version: "12".to_string(),
+            implement: "atri-http",
+            version: "0.1.0",
+            onebot_version: "12",
         }
     }
 }
@@ -80,7 +77,7 @@ impl ActionResponse {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug ,Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ActionStatus {
     Ok,

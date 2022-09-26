@@ -3,7 +3,7 @@ use atri_plugin::contact::group::Group;
 use atri_plugin::contact::member::NamedMember;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UserInfo {
     pub user_id: String,
     pub user_name: String,
@@ -22,7 +22,7 @@ impl From<Friend> for UserInfo {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug ,Serialize, Deserialize)]
 pub struct GroupInfo {
     pub group_id: String,
     pub group_name: String,
@@ -37,7 +37,7 @@ impl From<Group> for GroupInfo {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct GroupMemberInfo {
     pub user_id: String,
     pub user_name: String,

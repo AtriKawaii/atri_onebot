@@ -3,13 +3,13 @@ use crate::data::message::OneBotMessageEvent;
 use atri_plugin::bot::Bot;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize)]
 pub struct OneBotEvent {
     pub id: String,
     pub time: f64,
     #[serde(flatten)]
     pub inner: OneBotTypedEvent,
-    pub sub_type: String,
+    pub sub_type: &'static str,
     #[serde(rename = "self")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bot_self: Option<BotSelfData>,
@@ -32,13 +32,13 @@ pub enum OneBotMetaEvent {
     StatusUpdate { status: OneBotMetaStatus },
 }
 
-#[derive(Clone, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct OneBotMetaStatus {
     pub good: bool,
     pub bots: Vec<BotStatus>,
 }
 
-#[derive(Clone, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct BotStatus {
     #[serde(rename = "self")]
     pub bot_self: BotSelfData,
@@ -57,7 +57,7 @@ impl From<Bot> for BotStatus {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum BotStatusExt {
     #[serde(rename = "qq.status")]

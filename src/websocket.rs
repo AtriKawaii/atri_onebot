@@ -37,7 +37,7 @@ pub async fn start_websocket(
             id: uuid::Uuid::new_v4().to_string(),
             time: SystemTime::UNIX_EPOCH.elapsed().unwrap().as_secs_f64(),
             inner: OneBotTypedEvent::Meta(OneBotMetaEvent::Heartbeat { interval }),
-            sub_type: "".to_string(),
+            sub_type: "",
             bot_self: None,
         };
 
@@ -117,7 +117,7 @@ pub fn ws_listener(tx: tokio::sync::broadcast::Sender<Arc<OneBotEvent>>) -> List
                             message: msg.into(),
                             group_id: e.group().id().to_string(),
                         }),
-                        sub_type: "".to_string(),
+                        sub_type: "",
                         bot_self: Some(e.bot().into()),
                     };
 
@@ -134,7 +134,7 @@ pub fn ws_listener(tx: tokio::sync::broadcast::Sender<Arc<OneBotEvent>>) -> List
                             message: msg.into(),
                             user_id: e.friend().id().to_string(),
                         }),
-                        sub_type: "".to_string(),
+                        sub_type: "",
                         bot_self: Some(e.bot().into()),
                     };
 
