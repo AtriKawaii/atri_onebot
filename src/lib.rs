@@ -2,6 +2,7 @@ mod data;
 mod handler;
 mod http;
 mod websocket;
+mod config;
 
 use actix_web::dev::{ServerHandle, Service};
 use actix_web::{web, App, HttpResponse, HttpServer};
@@ -28,6 +29,8 @@ struct WebServer {
     handle: ServerHandle,
     _listener: ListenerGuard,
 }
+
+static CONFIG_PATH: &str = "config/atri_onebot";
 
 impl Plugin for AtriOneBot {
     fn new() -> Self {
@@ -100,7 +103,7 @@ impl Plugin for AtriOneBot {
 
         let handle = http_server.handle();
 
-        rt.spawn(async {
+        rt.spawn(async move {
             http_server.await.unwrap();
         });
 
