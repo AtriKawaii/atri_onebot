@@ -227,9 +227,9 @@ dependencies = [
 
 [[package]]
 name = "atri_ffi"
-version = "0.2.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78588ca76ebb6337c05b075698889b4b70dc5d12959b015506844b5ea4747762"
+checksum = "54e94497e9bfb75afe9daac20b5ec1e2dcada33f52c691f2e1dd44ff12ca1bf4"
 
 [[package]]
 name = "atri_macros"
@@ -254,9 +254,9 @@ dependencies = [
 
 [[package]]
 name = "atri_plugin"
-version = "0.2.1"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3277ae9ed581d0bdf0c1b03530962a3aba21e1b1995b55e8215c9c281a6dabe"
+checksum = "30d4cb5ed2fa41880773d048babd44d8b601daefcc600fc2c6715f56d0b74276"
 dependencies = [
  "atri_ffi",
  "atri_macros",

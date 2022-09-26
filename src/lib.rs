@@ -1,5 +1,3 @@
-#![feature(once_cell)]
-
 mod data;
 mod handler;
 mod http;

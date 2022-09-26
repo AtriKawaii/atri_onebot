@@ -199,7 +199,7 @@ pub async fn handle_action(
             let id = id_parse!(&group_id, echo);
             let group = get_group!(bot, id, echo);
 
-            if let Err(e) = group.change_name(group_name).await {
+            if let Err(e) = group.change_name(&group_name).await {
                 return ActionResponse::from_err(e, 35012, echo);
             }
 
