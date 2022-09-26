@@ -60,7 +60,10 @@ pub async fn start_websocket(
                 Ok(str) => {
                     let result = event_handler.text(str).await;
                     if let Err(_) = result {
-                        info!("Websocket 已关闭: {:?}", req.connection_info().realip_remote_addr());
+                        info!(
+                            "Websocket 已关闭: {:?}",
+                            req.connection_info().realip_remote_addr()
+                        );
                         return;
                     }
                 }
