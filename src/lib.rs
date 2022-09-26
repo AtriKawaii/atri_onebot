@@ -115,10 +115,6 @@ impl Plugin for AtriOneBot {
 
         info!("Started");
     }
-
-    fn should_drop() -> bool {
-        true
-    }
 }
 
 impl Drop for AtriOneBot {
@@ -133,10 +129,8 @@ impl Drop for AtriOneBot {
 #[cfg(test)]
 mod tests {
     use crate::data::action::ActionRequest;
-    use actix_web::dev::ServerHandle;
     use actix_web::{get, web, App, HttpServer, Responder};
     use serde_json::json;
-    use std::sync::OnceLock;
 
     #[test]
     fn test_server() {
@@ -145,25 +139,15 @@ mod tests {
             "HttpResponseBuilder::new(StatusCode::BAD_REQUEST)"
         }
 
-        #[get("/stop")]
-        async fn stop() -> impl Responder {
-            let _ = HANDLE.get().unwrap().stop(true);
-            ""
-        }
-
-        static HANDLE: OnceLock<ServerHandle> = OnceLock::new();
-
         actix_web::rt::Runtime::new().unwrap().block_on(async {
             let http_server = HttpServer::new(|| {
                 App::new()
                     .service(hello)
-                    .service(stop)
                     .default_service(web::to(|| async { "Where are u" }))
             })
             .bind(("127.0.0.1", 8080))
             .unwrap()
             .run();
-            HANDLE.get_or_init(|| http_server.handle());
             http_server.await.unwrap();
         });
     }
