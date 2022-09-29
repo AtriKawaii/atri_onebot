@@ -79,7 +79,7 @@ pub async fn start_websocket(
             match msg {
                 Message::Text(json) => {
                     let rsp = match serde_json::from_str::<ActionRequest>(&json) {
-                        Ok(req) => handle_action(req, None).await,
+                        Ok(req) => handle_action(req).await,
                         Err(e) => ActionResponse::from_err(e, 10001, None),
                     };
 

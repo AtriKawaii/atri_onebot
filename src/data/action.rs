@@ -15,7 +15,7 @@ pub struct ActionResponse {
     pub echo: Option<String>,
 }
 
-#[derive(Debug ,Serialize)]
+#[derive(Debug, Serialize)]
 #[serde(untagged)]
 pub enum ActionData {
     GetSupportActions(&'static [&'static str]),
@@ -41,9 +41,7 @@ pub enum ActionData {
 
 impl ActionData {
     pub fn support_actions() -> Self {
-        Self::GetSupportActions(
-            &["get_supported_actions", "get_status", "get_version"]
-        )
+        Self::GetSupportActions(&["get_supported_actions", "get_status", "get_version"])
     }
 
     pub fn version() -> Self {
@@ -77,7 +75,7 @@ impl ActionResponse {
     }
 }
 
-#[derive(Debug ,Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ActionStatus {
     Ok,
@@ -90,14 +88,14 @@ pub struct ActionRequest {
     pub action: Action,
     pub echo: Option<String>,
     #[serde(rename = "self")]
-    pub bot_self: Option<BotSelfData>,
+    pub bot_self: Option<BotData>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "action", content = "params")]
 pub enum Action {
-    GetLatestEvent {
+    GetLatestEvents {
         limit: i64,
         timeout: i64,
     },
@@ -153,7 +151,7 @@ pub enum OneBotMessageAction {
 }
 
 #[derive(Clone, Default, Debug, Serialize, Deserialize)]
-pub struct BotSelfData {
+pub struct BotData {
     pub platform: Platform,
     pub user_id: String,
 }
@@ -166,7 +164,7 @@ pub enum Platform {
     QQ,
 }
 
-impl From<Bot> for BotSelfData {
+impl From<Bot> for BotData {
     fn from(bot: Bot) -> Self {
         Self {
             platform: Platform::QQ,

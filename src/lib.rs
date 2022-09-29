@@ -1,23 +1,23 @@
+use std::future::Future;
+use std::mem;
+use std::net::{Ipv4Addr, SocketAddrV4};
+use std::time::Duration;
+
+use actix_web::dev::{ServerHandle, Service};
+use actix_web::http::header::Header;
+use actix_web::{web, App, HttpResponse, HttpServer};
+use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
+use atri_plugin::listener::ListenerGuard;
+use atri_plugin::{info, Plugin};
+
+use crate::http::onebot_http;
+use crate::websocket::{start_websocket, ws_listener};
+
+mod config;
 mod data;
 mod handler;
 mod http;
 mod websocket;
-mod config;
-
-use actix_web::dev::{ServerHandle, Service};
-use actix_web::{web, App, HttpResponse, HttpServer};
-use atri_plugin::{info, Plugin};
-use std::future::Future;
-use std::mem;
-use std::net::{Ipv4Addr, SocketAddrV4};
-
-use std::time::Duration;
-
-use crate::http::onebot_http;
-use crate::websocket::{start_websocket, ws_listener};
-use actix_web::http::header::Header;
-use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
-use atri_plugin::listener::ListenerGuard;
 
 #[atri_plugin::plugin]
 struct AtriOneBot {
@@ -131,9 +131,10 @@ impl Drop for AtriOneBot {
 
 #[cfg(test)]
 mod tests {
-    use crate::data::action::ActionRequest;
     use actix_web::{get, web, App, HttpServer, Responder};
     use serde_json::json;
+
+    use crate::data::action::ActionRequest;
 
     #[test]
     fn test_server() {
@@ -157,6 +158,19 @@ mod tests {
 
     #[test]
     fn actions() {
+        let get_latest_events = json!({
+            "action": "get_latest_events",
+            "params": {
+                "limit": 100,
+                "timeout": 0
+            }
+        });
+
+        println!(
+            "{:?}",
+            serde_json::from_value::<ActionRequest>(get_latest_events).unwrap()
+        );
+
         let self_info_req = json!({
             "action": "get_self_info",
             "params": {}

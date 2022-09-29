@@ -1,4 +1,4 @@
-use crate::data::action::BotSelfData;
+use crate::data::action::BotData;
 use crate::data::message::OneBotMessageEvent;
 use atri_plugin::bot::Bot;
 use serde::{Deserialize, Serialize};
@@ -12,7 +12,7 @@ pub struct OneBotEvent {
     pub sub_type: &'static str,
     #[serde(rename = "self")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub bot_self: Option<BotSelfData>,
+    pub bot_self: Option<BotData>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -41,7 +41,7 @@ pub struct OneBotMetaStatus {
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct BotStatus {
     #[serde(rename = "self")]
-    pub bot_self: BotSelfData,
+    pub bot_self: BotData,
     pub online: bool,
     #[serde(flatten)]
     pub ext: Option<BotStatusExt>,

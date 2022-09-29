@@ -7,7 +7,8 @@ use serde::{Deserialize, Serialize};
 pub struct UserInfo {
     pub user_id: String,
     pub user_name: String,
-    pub user_displayname: String,
+    #[serde(rename = "user_displayname")]
+    pub user_display_name: String,
     pub user_remark: String,
 }
 
@@ -16,13 +17,13 @@ impl From<Friend> for UserInfo {
         Self {
             user_id: f.id().to_string(),
             user_name: f.nickname().into(),
-            user_displayname: f.nickname().into(),
+            user_display_name: f.nickname().into(),
             user_remark: f.nickname().into(),
         }
     }
 }
 
-#[derive(Debug ,Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct GroupInfo {
     pub group_id: String,
     pub group_name: String,

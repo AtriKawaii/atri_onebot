@@ -3,14 +3,13 @@ use std::str::FromStr;
 use atri_plugin::bot::Bot;
 
 use crate::data::action::{
-    Action, ActionData, ActionRequest, ActionResponse, ActionStatus, BotSelfData,
-    OneBotMessageAction,
+    Action, ActionData, ActionRequest, ActionResponse, ActionStatus, OneBotMessageAction,
 };
 use crate::data::contact::{GroupInfo, GroupMemberInfo, UserInfo};
 use crate::data::event::{BotStatus, OneBotMetaStatus};
 
 macro_rules! id_parse {
-    ($id:expr,$echo:ident) => {
+    ($id:expr, $echo:ident) => {
         match i64::from_str($id) {
             Ok(id) => id,
             Err(e) => {
@@ -64,7 +63,6 @@ pub async fn handle_action(
         echo,
         bot_self,
     }: ActionRequest,
-    bot_id: Option<i64>,
 ) -> ActionResponse {
     match &action {
         Action::GetStatus {} => {
@@ -85,28 +83,16 @@ pub async fn handle_action(
         _ => {}
     }
 
-    let _echo = echo.clone();
-    let get_bot_id = |data: Option<BotSelfData>| -> Result<i64, ActionResponse> {
-        if let Some(dat) = data {
-            id_parse(&dat.user_id, _echo)
-        } else {
-            Err(ActionResponse {
-                status: ActionStatus::Failed,
-                retcode: 10101,
-                data: None,
-                message: "未指定机器人账号".into(),
-                echo: _echo,
-            })
-        }
-    };
-
-    let bot_id = if let Some(b) = bot_id {
-        b
+    let bot_id = if let Some(b) = bot_self {
+        id_parse!(&b.user_id, echo)
     } else {
-        match get_bot_id(bot_self) {
-            Ok(id) => id,
-            Err(e) => return e,
-        }
+        return ActionResponse {
+            status: ActionStatus::Failed,
+            retcode: 10101,
+            data: None,
+            message: "未指定机器人账号".into(),
+            echo,
+        };
     };
 
     let bot = if let Some(bot) = Bot::find(bot_id) {
@@ -134,7 +120,7 @@ pub async fn handle_action(
             Some(ActionData::GetUserInfo(UserInfo {
                 user_id,
                 user_name: friend.nickname().into(),
-                user_displayname: friend.nickname().into(),
+                user_display_name: friend.nickname().into(),
                 user_remark: friend.nickname().into(),
             }))
         }
