@@ -152,7 +152,6 @@ mod tests {
             .bind(("127.0.0.1", 8080))
             .unwrap()
             .run();
-            http_server.await.unwrap();
         });
     }
 
