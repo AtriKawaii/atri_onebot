@@ -251,13 +251,3 @@ pub async fn handle_action(
         echo,
     }
 }
-
-fn id_parse(id: &str, echo: Option<String>) -> Result<i64, ActionResponse> {
-    i64::from_str(id).map_err(|err| ActionResponse {
-        status: ActionStatus::Failed,
-        retcode: 10003,
-        data: None,
-        message: err.to_string(),
-        echo,
-    })
-}
