@@ -14,7 +14,7 @@ pub struct BotQuery {
     bot_id: Option<i64>,
 }
 
-#[post("/onebot")]
+#[post("/onebot12/http")]
 pub async fn onebot_http(req: String) -> impl Responder {
     let rsp = match serde_json::from_str::<ActionRequest>(&req) {
         Ok(req) => handle_action(req).await,

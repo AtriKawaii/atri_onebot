@@ -1,14 +1,18 @@
+use std::fs::{create_dir_all, File, OpenOptions};
 use std::future::Future;
+use std::io::{Read, Write};
 use std::mem;
-use std::net::{Ipv4Addr, SocketAddrV4};
+use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::Duration;
 
+use crate::config::{AtriOneBotConfig, OneBotServer};
 use actix_web::dev::{ServerHandle, Service};
 use actix_web::http::header::Header;
 use actix_web::{web, App, HttpResponse, HttpServer};
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
 use atri_plugin::listener::ListenerGuard;
-use atri_plugin::{info, Plugin};
+use atri_plugin::{error, info, Plugin};
 
 use crate::http::onebot_http;
 use crate::websocket::{start_websocket, ws_listener};
@@ -26,11 +30,12 @@ struct AtriOneBot {
 
 struct WebServer {
     runtime: tokio::runtime::Runtime,
-    handle: ServerHandle,
+    handles: Vec<ServerHandle>,
     _listener: ListenerGuard,
 }
 
-static CONFIG_PATH: &str = "config/atri_onebot";
+static CONFIG_DIR: &str = "workspaces/atri_onebot";
+static CONFIG_FILE: &str = "config.toml";
 
 impl Plugin for AtriOneBot {
     fn new() -> Self {
@@ -38,8 +43,35 @@ impl Plugin for AtriOneBot {
     }
 
     fn enable(&mut self) {
-        let ip = Ipv4Addr::new(127, 0, 0, 1);
-        let addr = SocketAddrV4::new(ip, 8080);
+        let mut path = PathBuf::from(CONFIG_DIR);
+        create_dir_all(&path).expect("Cannot create workspace for atri_onebot");
+        path.push(CONFIG_FILE);
+
+        let f = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open(&path)
+            .expect("Cannot open or create config file");
+
+        let mut bytes = vec![];
+        (&f).read_to_end(&mut bytes).expect("Cannot read file");
+        drop(f);
+
+        let config: AtriOneBotConfig = toml::from_slice(&bytes).unwrap_or_else(|e| {
+            error!("读取配置文件失败: {}", e);
+
+            let c = AtriOneBotConfig::default();
+            let str = toml::to_string_pretty(&c).unwrap();
+            File::create(&path)
+                .expect("Cannot create file")
+                .write_all(str.as_bytes())
+                .expect("Cannot write config to file");
+
+            c
+        });
+
+        println!("Config: {:?}", config);
 
         let rt = tokio::runtime::Builder::new_multi_thread()
             .worker_threads(1)
@@ -49,70 +81,96 @@ impl Plugin for AtriOneBot {
 
         let (tx, _) = tokio::sync::broadcast::channel(61);
 
-        let server_tx = tx.clone();
+        let mut handles = vec![];
 
-        let http_server = HttpServer::new(move || {
-            App::new()
-                .wrap_fn(|a, b| {
-                    let correct = String::from("1234");
+        let mut heartbeat = config.heartbeat;
+        if heartbeat.interval <= 0 {
+            heartbeat.enabled = false;
+        }
+        for server in config.servers {
+            match server {
+                OneBotServer::WebSocket {
+                    host,
+                    port,
+                    access_token,
+                } => {
+                    let server_tx = tx.clone();
 
-                    let f: Box<dyn Future<Output = _>> =
-                        if let Ok(auth) = Authorization::<Bearer>::parse(&a) {
-                            let bearer = auth.into_scheme();
-                            if bearer.token() == correct {
-                                let b = b.call(a);
-                                Box::new(async { b.await })
-                            } else {
-                                Box::new(async {
-                                    Ok(a.into_response(HttpResponse::Unauthorized().finish()))
-                                })
-                            }
-                        } else {
-                            let query = a.query_string();
-                            let auth: String = serde_urlencoded::from_str(query)
-                                .map(|e: http::Authorization| e.access_token)
-                                .unwrap_or_else(|_| String::new());
+                    let token = Arc::new(access_token);
 
-                            if auth == correct {
-                                let b = b.call(a);
-                                Box::new(async { b.await })
-                            } else {
-                                Box::new(async {
-                                    Ok(a.into_response(HttpResponse::Unauthorized().finish()))
-                                })
-                            }
-                        };
+                    let http_server = HttpServer::new(move || {
+                        let token = Arc::clone(&token);
 
-                    async move {
-                        let pin = Box::into_pin(f);
-                        pin.await
-                    }
-                })
-                .service(
-                    web::resource("/onebot/websocket")
-                        .route(web::get().to(start_websocket))
-                        .app_data(server_tx.clone()),
-                )
-                .service(onebot_http)
-                .default_service(web::to(|| async { "Unknown" }))
-        })
-        .bind(addr)
-        .unwrap()
-        .workers(4)
-        .run();
+                        App::new()
+                            .wrap_fn(move |a, b| {
+                                let correct = &**token;
 
-        let handle = http_server.handle();
+                                let f: Box<dyn Future<Output = _>> =
+                                    if let Ok(auth) = Authorization::<Bearer>::parse(&a) {
+                                        let bearer = auth.into_scheme();
+                                        if bearer.token() == correct {
+                                            let b = b.call(a);
+                                            Box::new(b)
+                                        } else {
+                                            Box::new(async {
+                                                Ok(a.into_response(
+                                                    HttpResponse::Unauthorized().finish(),
+                                                ))
+                                            })
+                                        }
+                                    } else {
+                                        let query = a.query_string();
+                                        let auth: String = serde_urlencoded::from_str(query)
+                                            .map(|e: http::Authorization| e.access_token)
+                                            .unwrap_or_else(|_| String::new());
 
-        rt.spawn(async move {
-            http_server.await.unwrap();
-        });
+                                        if auth == correct {
+                                            let b = b.call(a);
+                                            Box::new(b)
+                                        } else {
+                                            Box::new(async {
+                                                Ok(a.into_response(
+                                                    HttpResponse::Unauthorized().finish(),
+                                                ))
+                                            })
+                                        }
+                                    };
+
+                                async move {
+                                    let pin = Box::into_pin(f);
+                                    pin.await
+                                }
+                            })
+                            .service(
+                                web::resource("/onebot12/websocket")
+                                    .route(web::get().to(start_websocket))
+                                    .app_data(server_tx.clone())
+                                    .app_data(heartbeat),
+                            )
+                            .service(onebot_http)
+                            .default_service(web::to(|| async { "Unknown" }))
+                    })
+                    .bind((host, port))
+                    .unwrap()
+                    .workers(4)
+                    .run();
+
+                    handles.push(http_server.handle());
+
+                    rt.spawn(async move {
+                        http_server.await.unwrap();
+                    });
+                }
+                _ => todo!(),
+            }
+        }
 
         let tx = tx.clone();
         let guard = ws_listener(tx);
 
         self.server = Some(WebServer {
             runtime: rt,
-            handle,
+            handles,
             _listener: guard,
         });
 
@@ -123,7 +181,10 @@ impl Plugin for AtriOneBot {
 impl Drop for AtriOneBot {
     fn drop(&mut self) {
         if let Some(server) = mem::take(&mut self.server) {
-            let _ = server.handle.stop(true);
+            server.handles.iter().for_each(|handle| {
+                let _ = handle.stop(true);
+            });
+
             server.runtime.shutdown_timeout(Duration::from_millis(800));
         }
     }
@@ -144,7 +205,7 @@ mod tests {
         }
 
         actix_web::rt::Runtime::new().unwrap().block_on(async {
-            let http_server = HttpServer::new(|| {
+            let _ = HttpServer::new(|| {
                 App::new()
                     .service(hello)
                     .default_service(web::to(|| async { "Where are u" }))

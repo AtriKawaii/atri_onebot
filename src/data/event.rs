@@ -8,7 +8,7 @@ pub struct OneBotEvent {
     pub id: String,
     pub time: f64,
     #[serde(flatten)]
-    pub inner: OneBotTypedEvent,
+    pub typed: OneBotTypedEvent,
     pub sub_type: &'static str,
     #[serde(rename = "self")]
     #[serde(skip_serializing_if = "Option::is_none")]

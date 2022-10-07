@@ -1,0 +1,11 @@
+[[server]]
+# 可为'http', 'http-webhook', 'ws', 'ws-rev'
+type = 'ws'
+host = 'localhost'
+port = 8849
+access_token = '114and514'
+
+# 心跳设置
+[heartbeat]
+enabled = true
+interval = 5000
