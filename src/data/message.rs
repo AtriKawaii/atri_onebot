@@ -99,14 +99,14 @@ impl From<MessageValue> for MessageElement {
         match val {
             MessageValue::Text(s) => Self::Text { text: s },
             MessageValue::Image(img) => Self::Image {
-                file_id: img.id().to_string(),
+                file_id: img.id().into(),
             },
             MessageValue::At(at) => Self::Mention {
                 user_id: at.target.to_string(),
             },
             MessageValue::AtAll => Self::MentionAll {},
             _ => Self::Text {
-                text: "no".to_string(),
+                text: "no".into(),
             },
         }
     }

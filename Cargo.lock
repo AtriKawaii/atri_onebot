@@ -227,9 +227,9 @@ dependencies = [
 
 [[package]]
 name = "atri_ffi"
-version = "0.2.4"
+version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "204dde8ed7070c50ef9ce54cbe7a71e09475b388b50ff8c172a8cfc5cc9bc770"
+checksum = "35b681507e767bd3fe0494b812f5f665862e13199667a3c2c021ff8efa9fbaf2"
 
 [[package]]
 name = "atri_macros"
@@ -255,9 +255,9 @@ dependencies = [
 
 [[package]]
 name = "atri_plugin"
-version = "0.2.10"
+version = "0.2.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20220c66146601561297b5b713697452a772e14505757764e748731234e2630b"
+checksum = "2a1e5a9d902ac5e239776fc6e995786a1bc0cf13852cd231d9bb646e0d7f62d8"
 dependencies = [
  "atri_ffi",
  "atri_macros",
@@ -972,9 +972,9 @@ checksum = "099b7128301d285f79ddd55b9a83d5e6b9e97c92e0ea0daebee7263e932de992"
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.4"
+version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcc811dc4066ac62f84f11307873c4850cb653bfa9b1719cee2bd2204a4bc5dd"
+checksum = "6ceab39d59e4c9499d4e5a8ee0e2735b891bb7308ac83dfb4e80cad195c9f6f3"
 
 [[package]]
 name = "unicode-normalization"
@@ -998,9 +998,9 @@ dependencies = [
 
 [[package]]
 name = "uuid"
-version = "1.1.2"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd6469f4314d5f1ffec476e05f17cc9a78bc7a27a6a857842170bdf8d6f98d2f"
+checksum = "feb41e78f93363bb2df8b0e86a2ca30eed7806ea16ea0c790d757cf93f79be83"
 dependencies = [
  "getrandom",
  "rand",

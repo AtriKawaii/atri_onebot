@@ -15,7 +15,7 @@ use atri_plugin::listener::ListenerGuard;
 use atri_plugin::{error, info, Plugin};
 
 use crate::http::onebot_http;
-use crate::websocket::{start_websocket, ws_listener};
+use crate::websocket::{start_websocket, listener};
 
 mod config;
 mod data;
@@ -166,7 +166,7 @@ impl Plugin for AtriOneBot {
         }
 
         let tx = tx.clone();
-        let guard = ws_listener(tx);
+        let guard = listener(tx);
 
         self.server = Some(WebServer {
             runtime: rt,

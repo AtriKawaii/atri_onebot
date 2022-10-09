@@ -1,6 +1,6 @@
 use crate::config::HeartbeatConfig;
 use crate::data::action::{ActionRequest, ActionResponse};
-use crate::data::event::{OneBotEvent, OneBotMetaEvent, OneBotTypedEvent};
+use crate::data::event::{BotStatus, OneBotEvent, OneBotMetaEvent, OneBotMetaStatus, OneBotTypedEvent};
 use crate::data::message::OneBotMessageEvent;
 use crate::handler::handle_action;
 use actix_web::{web, HttpRequest, HttpResponse};
@@ -9,7 +9,10 @@ use atri_plugin::event::Event;
 use atri_plugin::info;
 use atri_plugin::listener::{Listener, ListenerGuard};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::thread;
 use std::time::{Duration, SystemTime};
+use atri_plugin::bot::Bot;
 
 pub async fn start_websocket(
     req: HttpRequest,
@@ -45,7 +48,7 @@ pub async fn start_websocket(
 
             let mut heartbeat_pkt = OneBotEvent {
                 id: uuid::Uuid::new_v4().to_string(),
-                time: SystemTime::UNIX_EPOCH.elapsed().unwrap().as_secs_f64(),
+                time: sys_time(),
                 typed: OneBotTypedEvent::Meta(OneBotMetaEvent::Heartbeat { interval }),
                 sub_type: "",
                 bot_self: None,
@@ -57,7 +60,7 @@ pub async fn start_websocket(
             {
                 let uuid = uuid::Uuid::new_v4();
                 heartbeat_pkt.id = uuid.to_string();
-                heartbeat_pkt.time = SystemTime::UNIX_EPOCH.elapsed().unwrap().as_secs_f64();
+                heartbeat_pkt.time = sys_time();
                 tokio::time::sleep(Duration::from_millis(interval as u64)).await;
                 // >0
             }
@@ -116,12 +119,46 @@ pub async fn start_websocket(
     Ok(resp)
 }
 
-pub fn ws_listener(tx: tokio::sync::broadcast::Sender<Arc<OneBotEvent>>) -> ListenerGuard {
+pub fn listener(tx: tokio::sync::broadcast::Sender<Arc<OneBotEvent>>) -> ListenerGuard {
+    let counter = Arc::new(AtomicBool::new(false));
+
+    let cnt = counter.clone();
+    let sender = tx.clone();
+    thread::spawn(move || {
+        loop {
+            thread::sleep(Duration::from_secs(10));
+            if !cnt.swap(false, Ordering::Acquire) {
+                let ob = OneBotEvent {
+                    id: uuid::Uuid::new_v4().to_string(),
+                    time: sys_time(),
+                    typed: OneBotTypedEvent::Meta(OneBotMetaEvent::StatusUpdate {
+                        status: OneBotMetaStatus {
+                            good: true,
+                            bots: Bot::list().into_iter().map(BotStatus::from).collect()
+                        }
+                    }),
+                    sub_type: "",
+                    bot_self: None
+                };
+
+                let arc = Arc::new(ob);
+
+                let _ = sender.send(arc);
+
+                break;
+            }
+        }
+    });
+
     Listener::listening_on_always(move |e: Event| {
         let tx = tx.clone();
+        let cnt = counter.clone();
         async move {
             match e {
-                Event::GroupMessageEvent(e) => {
+                Event::BotLogin(_) => {
+                    cnt.swap(true, Ordering::Relaxed);
+                }
+                Event::GroupMessage(e) => {
                     let msg = e.message();
                     let ob = OneBotEvent {
                         id: uuid::Uuid::new_v4().to_string(),
@@ -138,7 +175,7 @@ pub fn ws_listener(tx: tokio::sync::broadcast::Sender<Arc<OneBotEvent>>) -> List
 
                     let _ = tx.send(arc);
                 }
-                Event::FriendMessageEvent(e) => {
+                Event::FriendMessage(e) => {
                     let msg = e.message();
                     let ob = OneBotEvent {
                         id: uuid::Uuid::new_v4().to_string(),
@@ -159,4 +196,8 @@ pub fn ws_listener(tx: tokio::sync::broadcast::Sender<Arc<OneBotEvent>>) -> List
             }
         }
     })
+}
+
+fn sys_time() -> f64 {
+    SystemTime::UNIX_EPOCH.elapsed().unwrap().as_secs_f64()
 }
