@@ -105,9 +105,7 @@ impl From<MessageValue> for MessageElement {
                 user_id: at.target.to_string(),
             },
             MessageValue::AtAll => Self::MentionAll {},
-            _ => Self::Text {
-                text: "no".into(),
-            },
+            _ => Self::Text { text: "no".into() },
         }
     }
 }

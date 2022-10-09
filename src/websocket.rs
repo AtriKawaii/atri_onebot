@@ -1,18 +1,20 @@
 use crate::config::HeartbeatConfig;
 use crate::data::action::{ActionRequest, ActionResponse};
-use crate::data::event::{BotStatus, OneBotEvent, OneBotMetaEvent, OneBotMetaStatus, OneBotTypedEvent};
+use crate::data::event::{
+    BotStatus, OneBotEvent, OneBotMetaEvent, OneBotMetaStatus, OneBotTypedEvent,
+};
 use crate::data::message::OneBotMessageEvent;
 use crate::handler::handle_action;
 use actix_web::{web, HttpRequest, HttpResponse};
 use actix_ws::Message;
+use atri_plugin::bot::Bot;
 use atri_plugin::event::Event;
-use atri_plugin::{error, info};
 use atri_plugin::listener::{Listener, ListenerGuard};
-use std::sync::Arc;
+use atri_plugin::{error, info};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, SystemTime};
-use atri_plugin::bot::Bot;
 
 pub async fn start_websocket(
     req: HttpRequest,
@@ -62,7 +64,6 @@ pub async fn start_websocket(
                 heartbeat_pkt.id = uuid.to_string();
                 heartbeat_pkt.time = sys_time();
                 tokio::time::sleep(Duration::from_millis(interval as u64)).await;
-                // >0
             }
         });
     }
@@ -124,32 +125,27 @@ pub fn listener(tx: tokio::sync::broadcast::Sender<Arc<OneBotEvent>>) -> Listene
 
     let cnt = counter.clone();
     let sender = tx.clone();
-    thread::spawn(move || {
-        loop {
-            thread::sleep(Duration::from_secs(10));
-            if !cnt.swap(false, Ordering::Acquire) {
-                let ob = OneBotEvent {
-                    id: uuid::Uuid::new_v4().to_string(),
-                    time: sys_time(),
-                    typed: OneBotTypedEvent::Meta(OneBotMetaEvent::StatusUpdate {
-                        status: OneBotMetaStatus {
-                            good: true,
-                            bots: Bot::list()
-                                .into_iter()
-                                .map(BotStatus::from)
-                                .collect()
-                        }
-                    }),
-                    sub_type: "",
-                    bot_self: None
-                };
+    thread::spawn(move || loop {
+        thread::sleep(Duration::from_secs(10));
+        if !cnt.swap(false, Ordering::Acquire) {
+            let ob = OneBotEvent {
+                id: uuid::Uuid::new_v4().to_string(),
+                time: sys_time(),
+                typed: OneBotTypedEvent::Meta(OneBotMetaEvent::StatusUpdate {
+                    status: OneBotMetaStatus {
+                        good: true,
+                        bots: Bot::list().into_iter().map(BotStatus::from).collect(),
+                    },
+                }),
+                sub_type: "",
+                bot_self: None,
+            };
 
-                let arc = Arc::new(ob);
+            let arc = Arc::new(ob);
 
-                let _ = sender.send(arc);
+            let _ = sender.send(arc);
 
-                break;
-            }
+            break;
         }
     });
 

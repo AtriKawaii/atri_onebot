@@ -15,7 +15,7 @@ use atri_plugin::listener::ListenerGuard;
 use atri_plugin::{error, info, Plugin};
 
 use crate::http::onebot_http;
-use crate::websocket::{start_websocket, listener};
+use crate::websocket::{listener, start_websocket};
 
 mod config;
 mod data;
