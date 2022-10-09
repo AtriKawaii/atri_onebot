@@ -6,7 +6,7 @@ use crate::handler::handle_action;
 use actix_web::{web, HttpRequest, HttpResponse};
 use actix_ws::Message;
 use atri_plugin::event::Event;
-use atri_plugin::info;
+use atri_plugin::{error, info};
 use atri_plugin::listener::{Listener, ListenerGuard};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -79,7 +79,7 @@ pub async fn start_websocket(
                     }
                 }
                 Err(e) => {
-                    info!("Error: {}", e);
+                    error!("Error: {}", e);
                 }
             }
         }
@@ -134,7 +134,10 @@ pub fn listener(tx: tokio::sync::broadcast::Sender<Arc<OneBotEvent>>) -> Listene
                     typed: OneBotTypedEvent::Meta(OneBotMetaEvent::StatusUpdate {
                         status: OneBotMetaStatus {
                             good: true,
-                            bots: Bot::list().into_iter().map(BotStatus::from).collect()
+                            bots: Bot::list()
+                                .into_iter()
+                                .map(BotStatus::from)
+                                .collect()
                         }
                     }),
                     sub_type: "",
