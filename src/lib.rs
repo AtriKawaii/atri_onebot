@@ -103,14 +103,13 @@ impl Plugin for AtriOneBot {
 
                         App::new()
                             .wrap_fn(move |a, b| {
-                                let correct = &**token;
+                                let f: Box<dyn Future<Output = _>> = if let Some(token) = &*token {
+                                    let correct = &**token;
 
-                                let f: Box<dyn Future<Output = _>> =
                                     if let Ok(auth) = Authorization::<Bearer>::parse(&a) {
                                         let bearer = auth.into_scheme();
                                         if bearer.token() == correct {
-                                            let b = b.call(a);
-                                            Box::new(b)
+                                            Box::new(b.call(a))
                                         } else {
                                             Box::new(async {
                                                 Ok(a.into_response(
@@ -125,8 +124,7 @@ impl Plugin for AtriOneBot {
                                             .unwrap_or_else(|_| String::new());
 
                                         if auth == correct {
-                                            let b = b.call(a);
-                                            Box::new(b)
+                                            Box::new(b.call(a))
                                         } else {
                                             Box::new(async {
                                                 Ok(a.into_response(
@@ -134,7 +132,10 @@ impl Plugin for AtriOneBot {
                                                 ))
                                             })
                                         }
-                                    };
+                                    }
+                                } else {
+                                    Box::new(b.call(a))
+                                };
 
                                 async move {
                                     let pin = Box::into_pin(f);

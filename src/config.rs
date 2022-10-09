@@ -21,7 +21,7 @@ pub enum OneBotServer {
     WebSocket {
         host: String,
         port: u16,
-        access_token: String,
+        access_token: Option<String>,
     },
     #[serde(rename = "ws-rev")]
     WebSocketReverse,
