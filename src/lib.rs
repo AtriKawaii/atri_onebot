@@ -102,39 +102,39 @@ impl Plugin for AtriOneBot {
                         let token = Arc::clone(&token);
 
                         App::new()
-                            .wrap_fn(move |a, b| {
+                            .wrap_fn(move |req, routing| {
                                 let f: Box<dyn Future<Output = _>> = if let Some(token) = &*token {
                                     let correct = &**token;
 
-                                    if let Ok(auth) = Authorization::<Bearer>::parse(&a) {
+                                    if let Ok(auth) = Authorization::<Bearer>::parse(&req) {
                                         let bearer = auth.into_scheme();
                                         if bearer.token() == correct {
-                                            Box::new(b.call(a))
+                                            Box::new(routing.call(req))
                                         } else {
                                             Box::new(async {
-                                                Ok(a.into_response(
+                                                Ok(req.into_response(
                                                     HttpResponse::Unauthorized().finish(),
                                                 ))
                                             })
                                         }
                                     } else {
-                                        let query = a.query_string();
+                                        let query = req.query_string();
                                         let auth: String = serde_urlencoded::from_str(query)
                                             .map(|e: http::Authorization| e.access_token)
                                             .unwrap_or_else(|_| String::new());
 
                                         if auth == correct {
-                                            Box::new(b.call(a))
+                                            Box::new(routing.call(req))
                                         } else {
                                             Box::new(async {
-                                                Ok(a.into_response(
+                                                Ok(req.into_response(
                                                     HttpResponse::Unauthorized().finish(),
                                                 ))
                                             })
                                         }
                                     }
                                 } else {
-                                    Box::new(b.call(a))
+                                    Box::new(routing.call(req))
                                 };
 
                                 async move {
