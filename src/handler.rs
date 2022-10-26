@@ -6,7 +6,7 @@ use crate::data::action::{
     Action, ActionData, ActionRequest, ActionResponse, ActionStatus, OneBotMessageAction,
 };
 use crate::data::contact::{GroupInfo, GroupMemberInfo, UserInfo};
-use crate::data::event::{BotStatus, OneBotMetaStatus};
+use crate::data::event::{BotStatus, OneBotStatus};
 
 macro_rules! id_parse {
     ($id:expr, $echo:ident) => {
@@ -67,7 +67,7 @@ pub async fn handle_action(
     match &action {
         Action::GetStatus {} => {
             return ActionResponse::from_data(
-                Some(ActionData::GetStatus(OneBotMetaStatus {
+                Some(ActionData::GetStatus(OneBotStatus {
                     good: true,
                     bots: Bot::list().into_iter().map(BotStatus::from).collect(),
                 })),
@@ -211,6 +211,7 @@ pub async fn handle_action(
             match msg {
                 OneBotMessageAction::Group { message, group_id } => {
                     let id = id_parse!(&group_id, echo);
+                    let group = get_group!(bot, id, echo);
                 }
                 OneBotMessageAction::Private { message, user_id } => {
                     let id = id_parse!(&user_id, echo);

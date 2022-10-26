@@ -29,11 +29,11 @@ pub enum OneBotTypedEvent {
 #[serde(rename_all = "snake_case")]
 pub enum OneBotMetaEvent {
     Heartbeat { interval: i64 },
-    StatusUpdate { status: OneBotMetaStatus },
+    StatusUpdate { status: OneBotStatus },
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
-pub struct OneBotMetaStatus {
+pub struct OneBotStatus {
     pub good: bool,
     pub bots: Vec<BotStatus>,
 }

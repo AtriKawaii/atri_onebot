@@ -1,5 +1,5 @@
 use crate::data::contact::{GroupInfo, GroupMemberInfo, UserInfo};
-use crate::data::event::OneBotMetaStatus;
+use crate::data::event::OneBotStatus;
 use crate::data::message::MessageElement;
 use atri_plugin::bot::Bot;
 use serde::{Deserialize, Serialize};
@@ -19,7 +19,7 @@ pub struct ActionResponse {
 #[serde(untagged)]
 pub enum ActionData {
     GetSupportActions(&'static [&'static str]),
-    GetStatus(OneBotMetaStatus),
+    GetStatus(OneBotStatus),
     GetVersion {
         #[serde(rename = "impl")]
         implement: &'static str,

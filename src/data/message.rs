@@ -1,6 +1,8 @@
+use atri_plugin::message::at::At;
 use atri_plugin::message::meta::Reply;
 use atri_plugin::message::{MessageChain, MessageValue};
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -105,7 +107,7 @@ impl From<MessageValue> for MessageElement {
                 user_id: at.target.to_string(),
             },
             MessageValue::AtAll => Self::MentionAll {},
-            _ => Self::Text { text: "no".into() },
+            _ => Self::Text { text: "".into() },
         }
     }
 }
@@ -121,6 +123,21 @@ impl From<&Reply> for MessageElement {
         Self::Reply {
             message_id: reply.reply_seq.to_string(),
             user_id: reply.sender.to_string(),
+        }
+    }
+}
+
+impl From<MessageElement> for MessageValue {
+    fn from(elem: MessageElement) -> Self {
+        match elem {
+            MessageElement::Text { text } => Self::Text(text),
+            MessageElement::Image { file_id } => todo!(),
+            MessageElement::Mention { user_id } => Self::At(At {
+                target: i64::from_str(&user_id).unwrap(),
+                display: "".into(),
+            }),
+            MessageElement::MentionAll {} => Self::AtAll,
+            _ => Self::Text("".into()),
         }
     }
 }

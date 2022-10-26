@@ -1,8 +1,6 @@
 use crate::config::HeartbeatConfig;
 use crate::data::action::{ActionRequest, ActionResponse};
-use crate::data::event::{
-    BotStatus, OneBotEvent, OneBotMetaEvent, OneBotMetaStatus, OneBotTypedEvent,
-};
+use crate::data::event::{BotStatus, OneBotEvent, OneBotMetaEvent, OneBotStatus, OneBotTypedEvent};
 use crate::data::message::OneBotMessageEvent;
 use crate::handler::handle_action;
 use actix_web::{web, HttpRequest, HttpResponse};
@@ -132,7 +130,7 @@ pub fn listener(tx: tokio::sync::broadcast::Sender<Arc<OneBotEvent>>) -> Listene
                 id: uuid::Uuid::new_v4().to_string(),
                 time: sys_time(),
                 typed: OneBotTypedEvent::Meta(OneBotMetaEvent::StatusUpdate {
-                    status: OneBotMetaStatus {
+                    status: OneBotStatus {
                         good: true,
                         bots: Bot::list().into_iter().map(BotStatus::from).collect(),
                     },
