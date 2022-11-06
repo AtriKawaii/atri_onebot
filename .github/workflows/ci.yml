@@ -91,7 +91,7 @@ jobs:
       CARGO_INCREMENTAL: 0
       windows: ${{ startsWith(matrix.target.name, 'Windows') }}
       linux: ${{ startsWith(matrix.target.name, 'Linux') }}
-      mac: ${{ startsWith(matrix.target.name, 'mac') }}
+      darwin: ${{ startsWith(matrix.target.name, 'mac') || startsWith(matrix.target.name, 'iOS') }}
 
     steps:
       - uses: actions/checkout@v3
@@ -107,7 +107,7 @@ jobs:
           use-cross: true
 
       - name: Upload dylib
-        if: env.mac == 'true'
+        if: env.darwin == 'true'
         uses: actions/upload-artifact@v3
         with:
           name: libatri_onebot-${{ matrix.target.tool }}.dylib
